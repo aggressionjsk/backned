@@ -22,7 +22,7 @@ app = FastAPI(title="AI Humanizer (Standalone)")
 # ---- CORS middleware (preflight-safe) ----
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://behzodjon-aggressio.vercel.app"],  # your frontend URL
+    allow_origins=["https://www.zenus.space","https://www.zenus.space/"],  # your frontend URL
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
