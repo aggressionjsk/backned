@@ -8,27 +8,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import openai
 
-# Load .env
+# ---- Load environment variables ----
 load_dotenv()
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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")
+OPENAI_API_KEY = os.getenv("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")
 UNLOCK_KEY = os.getenv("UNLOCK_KEY", "dev-unlock-key")
 
 if not OPENAI_API_KEY:
     raise RuntimeError("Missing OPENAI_API_KEY in .env")
 
+# ---- Initialize FastAPI ----
 app = FastAPI(title="AI Humanizer (Standalone)")
 
-# ---- CORS middleware (preflight-safe) ----
+# ---- CORS middleware ----
+# This must come BEFORE any routes
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://www.zenus.space","https://www.zenus.space/"],  # your frontend URL
+    allow_origins=[
+        "https://www.zenus.space",  # your frontend production
+        "http://localhost:3000",    # local testing
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # allow all methods including OPTIONS
+    allow_headers=["*"],  # allow all headers including custom ones
 )
 
-# ---- Models ----
+# ---- Pydantic Models ----
 class TextRequest(BaseModel):
     text: str
     style: Optional[str] = "natural"
@@ -58,7 +62,6 @@ def build_system_prompt(style: str) -> str:
     return prompts.get(style.lower(), prompts["natural"])
 
 # ---- Endpoints ----
-
 @app.post("/detect", response_model=DetectResponse)
 async def detect_text(req: TextRequest):
     try:
