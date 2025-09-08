@@ -11,10 +11,7 @@ import openai
 # Load .env
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv(
-    "OPENAI_API_KEY",
-    "sk-your-openai-key"  # replace with your OpenAI API key or .env variable
-)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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")
 UNLOCK_KEY = os.getenv("UNLOCK_KEY", "dev-unlock-key")
 
 if not OPENAI_API_KEY:
@@ -22,12 +19,12 @@ if not OPENAI_API_KEY:
 
 app = FastAPI(title="AI Humanizer (Standalone)")
 
-# ---- CORS middleware ----
+# ---- CORS middleware (preflight-safe) ----
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://behzodjon-aggressio.vercel.app"],  # your frontend
+    allow_origins=["https://behzodjon-aggressio.vercel.app"],  # your frontend URL
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -64,9 +61,6 @@ def build_system_prompt(style: str) -> str:
 
 @app.post("/detect", response_model=DetectResponse)
 async def detect_text(req: TextRequest):
-    """
-    Run a heuristic detection using OpenAI to estimate if text seems human-written.
-    """
     try:
         prompt = (
             "Rate how likely the following text was written by a human rather than an AI, "
@@ -96,14 +90,11 @@ async def detect_text(req: TextRequest):
         score = max(0.0, min(100.0, score))
         return {"human_score": round(score, 2), "label": label}
 
-    except Exception as e:
+    except Exception:
         return {"human_score": 50.0, "label": "UNKNOWN"}
 
 @app.post("/rewrite", response_model=RewriteResponse)
 async def rewrite_text(req: TextRequest, x_unlock_key: Optional[str] = Header(None)):
-    """
-    Rewrite text using OpenAI. Returns preview text, can_copy is True only if X-UNLOCK-KEY matches.
-    """
     if not req.text or not req.text.strip():
         raise HTTPException(status_code=422, detail="Text is required")
 
